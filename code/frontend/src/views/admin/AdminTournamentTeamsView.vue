@@ -71,7 +71,6 @@ const ERROR_TEXT = {
   DATE_CLASH: 'ทีมนี้มีรายการอื่นที่วันแข่งทับกัน',
   FULL: `รายการแบบเก็บคะแนนรับได้สูงสุด ${MAX_POINTS_TEAMS} ทีม`,
   HAS_RESULTS: 'มีผลการแข่งแล้ว จึงล้างไม่ได้',
-  NOT_SUPPORTED: 'ยังล้างสายหรือตารางเกมไม่ได้ เพราะ backend ยังไม่มี API นี้',
 }
 const errorText = (e) => ERROR_TEXT[e.message] ?? (e.status ? `ทำรายการไม่สำเร็จ: ${e.message}` : 'ทำรายการไม่สำเร็จ ลองใหม่อีกครั้ง')
 

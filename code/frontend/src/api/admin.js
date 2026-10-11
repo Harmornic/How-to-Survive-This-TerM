@@ -283,10 +283,18 @@ export async function generateBracket(id, orderedTeamIds) {
   await loadAdminData()
 }
 
-// backend ยังไม่มี API ล้างสาย
-export async function resetBracket() {
-  throw new Error('NOT_SUPPORTED')
+// ล้างสายหรือตารางเกม backend ยอมให้ล้างเฉพาะตอนที่ยังไม่มีผลการแข่ง
+async function resetSchedule(id) {
+  const t = findTournament(id)
+  if (!t) throw new Error('NOT_FOUND')
+  await http.del(`/tournaments/${t.id}/schedule`).catch((e) => {
+    if (e instanceof ApiError && e.status === 409 && /results/i.test(e.message)) throw new Error('HAS_RESULTS')
+    throw e
+  })
+  await loadAdminData()
 }
+
+export const resetBracket = (id) => resetSchedule(id)
 
 export function draftFreeFireSchedule(tournament) {
   const start = new Date(`${tournament.startDate}T00:00:00Z`)
@@ -305,10 +313,7 @@ export async function generateFreeFireSchedule(id, schedule) {
   await loadAdminData()
 }
 
-// backend ยังไม่มี API ล้างตารางเกม
-export async function resetFreeFireSchedule() {
-  throw new Error('NOT_SUPPORTED')
-}
+export const resetFreeFireSchedule = (id) => resetSchedule(id)
 
 export const ROLE_SUGGESTIONS = {
   ROV: ['Slayer', 'Jungle', 'Mid', 'Abyssal', 'Support', 'Substitute'],

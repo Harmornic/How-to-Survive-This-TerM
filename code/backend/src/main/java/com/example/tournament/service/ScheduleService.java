@@ -9,5 +9,7 @@ public interface ScheduleService {
 
     ScheduleResponse createSchedule(Long tournamentId);
 
+    void resetSchedule(Long tournamentId);
+
     List<MatchResponse> listMatches(Long tournamentId);
 }

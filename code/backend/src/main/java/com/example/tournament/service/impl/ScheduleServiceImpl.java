@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,10 +34,12 @@ public class ScheduleServiceImpl implements ScheduleService {
     private final MatchRepository matches;
     private final MatchMapper mapper;
     private final Map<TournamentFormat, FormatStrategy> strategies;
+    private final JdbcTemplate jdbc;
 
     // Spring ส่ง FormatStrategy ทุกตัวที่เป็น @Component เข้ามาเอง
     public ScheduleServiceImpl(TournamentRepository tournaments, TournamentTeamRepository tournamentTeams,
-            MatchRepository matches, MatchMapper mapper, List<FormatStrategy> strategyList) {
+            MatchRepository matches, MatchMapper mapper, List<FormatStrategy> strategyList, JdbcTemplate jdbc) {
+        this.jdbc = jdbc;
         this.tournaments = tournaments;
         this.tournamentTeams = tournamentTeams;
         this.matches = matches;
@@ -78,6 +81,28 @@ public class ScheduleServiceImpl implements ScheduleService {
         int created = strategy.createSchedule(tournament, teams);
         tournament.setStatus(TournamentStatus.ONGOING);
         return new ScheduleResponse(tournamentId, format.name(), created);
+    }
+
+    @Override
+    public void resetSchedule(Long tournamentId) {
+        Tournament tournament = findTournament(tournamentId);
+        if (tournament.getStatus() == TournamentStatus.COMPLETED) {
+            throw new BusinessException("Cannot reset the schedule of a completed tournament");
+        }
+
+        // ล้างได้เฉพาะตอนที่ยังไม่มีผลการแข่งขัน เพื่อไม่ให้ผลที่บันทึกไว้หายไป
+        Boolean hasResults = jdbc.queryForObject("""
+                SELECT EXISTS (SELECT 1 FROM match_results mr JOIN matches m ON m.id = mr.match_id
+                               WHERE m.tournament_id = ?)
+                    OR EXISTS (SELECT 1 FROM free_fire_game_results WHERE tournament_id = ?)
+                """, Boolean.class, tournamentId, tournamentId);
+        if (Boolean.TRUE.equals(hasResults)) {
+            throw new BusinessException("Cannot reset the schedule after results have been recorded");
+        }
+
+        jdbc.update("DELETE FROM matches WHERE tournament_id = ?", tournamentId);
+        jdbc.update("DELETE FROM free_fire_games WHERE tournament_id = ?", tournamentId);
+        tournament.setStatus(TournamentStatus.UPCOMING);
     }
 
     @Override
