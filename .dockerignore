@@ -11,7 +11,7 @@ GIT-GUIDE.md
 *.pdf
 **/target
 **/node_modules
-code/frontend
+code/frontend/dist
 code/scripts
 test/frontend
 doc

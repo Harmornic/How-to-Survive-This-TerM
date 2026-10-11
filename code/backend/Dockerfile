@@ -7,7 +7,16 @@ COPY code/backend/src ./src
 COPY test/backend /workspace/test/backend
 CMD ["mvn", "-B", "spring-boot:run"]
 
+# build หน้าเว็บ Vue แล้วให้ Spring Boot เสิร์ฟเป็นไฟล์ static ในตัวเดียวกัน
+FROM node:22-alpine AS frontend
+WORKDIR /workspace/code/frontend
+COPY code/frontend/package.json code/frontend/package-lock.json ./
+RUN npm ci --no-audit --no-fund
+COPY code/frontend ./
+RUN npm run build
+
 FROM development AS build
+COPY --from=frontend /workspace/code/frontend/dist ./src/main/resources/static
 RUN mvn -B -DskipTests package
 
 FROM eclipse-temurin:21-jre-jammy AS runtime
