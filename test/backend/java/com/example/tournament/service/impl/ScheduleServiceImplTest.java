@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 import com.example.tournament.domain.entity.Team;
 import com.example.tournament.domain.entity.Tournament;
@@ -37,6 +38,7 @@ class ScheduleServiceImplTest {
     @Mock TournamentTeamRepository tournamentTeams;
     @Mock MatchRepository matches;
     @Mock FormatStrategy singleElimination;
+    @Mock JdbcTemplate jdbc;
 
     ScheduleServiceImpl service;
     Tournament tournament;
@@ -45,7 +47,7 @@ class ScheduleServiceImplTest {
     void setUp() {
         when(singleElimination.format()).thenReturn(TournamentFormat.SINGLE_ELIMINATION);
         service = new ScheduleServiceImpl(tournaments, tournamentTeams, matches, new MatchMapper(),
-                List.of(singleElimination));
+                List.of(singleElimination), jdbc);
         tournament = new Tournament();
         tournament.setStatus(TournamentStatus.UPCOMING);
     }
